@@ -1,0 +1,77 @@
+# ---------------------------
+# General temporary files
+# ---------------------------
+*.class
+*.log
+*.pyc
+*.swp
+*.lock
+.DS_Store
+.buildlog/
+.history
+.svn/
+.atom/
+migrate_working_dir/
+
+# ---------------------------
+# IDE-specific files
+# ---------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code (kişisel ayarlar tutulduğu için genelde yoksayılır)
+.vscode/
+
+# ---------------------------
+# Flutter/Dart-specific files
+# ---------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Web build folder
+web/.dart_tool/
+web/build/
+
+# ---------------------------
+# iOS-specific
+# ---------------------------
+ios/Flutter/.last_build_id
+ios/.symlinks/
+ios/Pods/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# ---------------------------
+# Android-specific
+# ---------------------------
+.android/
+.gradle/
+local.properties
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# ---------------------------
+# Desktop build outputs
+# ---------------------------
+macos/Flutter/ephemeral/
+linux/Flutter/ephemeral/
+windows/Flutter/ephemeral/
+
+# ---------------------------
+# Obfuscation / Symbolication
+# ---------------------------
+app.*.symbols
+app.*.map.json
+
+# ---------------------------
+# Documentation (optional)
+# ---------------------------
+**/doc/api/
