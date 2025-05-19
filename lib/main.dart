@@ -1,80 +1,89 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
-import 'screens/chart_screen.dart';
-import 'screens/camera_screen.dart';
-import 'screens/servo_control_screen.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MaterialApp(
+    home: BluetoothDataScreen(),
+    debugShowCheckedModeBanner: false,
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class BluetoothDataScreen extends StatefulWidget {
+  const BluetoothDataScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Akıllı Tarım Uygulaması',
-      theme: ThemeData(primarySwatch: Colors.green),
-      home: const MainScreen(),
-    );
+  State<BluetoothDataScreen> createState() => _BluetoothDataScreenState();
+}
+
+class _BluetoothDataScreenState extends State<BluetoothDataScreen> {
+  BluetoothDevice? _device;
+  String _data = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _startScan();
   }
-}
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  void _startScan() {
+    FlutterBluePlus.startScan(timeout: const Duration(seconds: 4));
+    FlutterBluePlus.scanResults.listen((results) async {
+      for (ScanResult r in results) {
+        if (r.device.platformName == "HC-05") {
+          FlutterBluePlus.stopScan();
+          await _connectToDevice(r.device);
+          break;
+        }
+      }
+    });
+  }
+
+  Future<void> _connectToDevice(BluetoothDevice device) async {
+    await device.connect();
+    setState(() {
+      _device = device;
+    });
+
+    List<BluetoothService> services = await device.discoverServices();
+    for (var service in services) {
+      for (var characteristic in service.characteristics) {
+        if (characteristic.properties.notify || characteristic.properties.read) {
+          await characteristic.setNotifyValue(true);
+          characteristic.lastValueStream.listen((value) {
+            setState(() {
+              _data += utf8.decode(value);
+            });
+          });
+          break;
+        }
+      }
+    }
+  }
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    ChartScreen(),
-    CameraScreen(),
-    ServoControlScreen(),
-  ];
-
-  final List<String> _titles = const [
-    "Veriler",
-    "Grafik",
-    "Kamera",
-    "Yön Kontrol",
-  ];
+  void dispose() {
+    _device?.disconnect();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_titles[_currentIndex])),
-      body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        selectedItemColor: Colors.green[700],
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: "Veriler",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.show_chart),
-            label: "Grafik",
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.videocam), label: "Kamera"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_remote),
-            label: "Kontrol",
-          ),
-        ],
+      appBar: AppBar(
+        title: const Text("Bluetooth Veri Okuma"),
+        backgroundColor: Colors.green,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: _device != null
+            ? SingleChildScrollView(
+                child: Text(
+                  _data,
+                  style: const TextStyle(fontSize: 16),
+                ),
+              )
+            : const Center(child: Text("Bluetooth cihaz aranıyor...")),
       ),
     );
   }
